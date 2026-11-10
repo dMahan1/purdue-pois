@@ -20,14 +20,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# Read from an environment variable so the key is never committed to git.
-# Using os.environ[...] (not .get) means Django refuses to start if it's missing,
-# instead of silently running with no key.
-SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Defaults to on for local development. Set DJANGO_DEBUG=False when deploying.
+DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
+
+# SECURITY WARNING: keep the secret key used in production secret!
+# The real key comes from an environment variable so it's never committed to git.
+# In local development (DEBUG on) we fall back to a placeholder key that is
+# deliberately public and protects nothing. With DEBUG off, a missing key
+# is an error, so a deployed site can never run on the placeholder.
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "django-insecure-local-dev-only-not-a-secret"
+    else:
+        raise RuntimeError("Set the DJANGO_SECRET_KEY environment variable.")
 
 ALLOWED_HOSTS = []
 
@@ -41,7 +48,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'hello_world'
+    'hello_world',
+    'events',
 ]
 
 MIDDLEWARE = [
@@ -109,7 +117,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Indiana/Indianapolis'
 
 USE_I18N = True
 
