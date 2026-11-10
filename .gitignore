@@ -1,0 +1,15 @@
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Local SQLite database (each developer runs migrations to create their own)
+*.sqlite3
+
+# Environment files that may hold secrets
+.env
+
+# macOS
+.DS_Store
+
+CLAUDE.md
+HOMEPAGE_PLAN.md
