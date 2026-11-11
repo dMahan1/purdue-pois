@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Purdue POIs</title>
+  <style> 
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 1rem; }
+    .search-form p { display: inline-block; margin: 0.25rem 1rem 0.25rem 0; }
+    .errors { color: #b00020; }
+    .event-card { border: 1px solid #ccc; border-radius: 6px; padding: 0.75rem; margin: 0.75rem 0; }
+    .event-card h3 { margin: 0 0 0.25rem; }
+    .meta { color: #555; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Purdue POIs</h1>
+  </header>
+
+  {# method="get": filters only read data, so they go in the URL. #}
+  <form method="get" class="search-form" id="search-form">
+    {% if form.non_field_errors %}
+      <div class="errors">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <p>{{ form.q.label_tag }} {{ form.q }} {{ form.q.errors }}</p>
+    <p>{{ form.category.label_tag }} {{ form.category }}</p>
+    <br>
+    <p>
+      Near:
+      <button type="button" id="use-location">Use my location</button>
+      <span id="location-status"></span>
+      <button type="button" id="clear-location" hidden>Clear</button>
+    </p>
+    <p>or {{ form.building.label_tag }} {{ form.building }}</p>
+    <br>
+    <p>{{ form.radius.label_tag }} {{ form.radius }}</p>
+    <p>{{ form.date_from.label_tag }} {{ form.date_from }} {{ form.date_from.errors }}</p>
+    <p>{{ form.date_to.label_tag }} {{ form.date_to }}</p>
+    {{ form.date_to.errors }}
+    {{ form.lat }} {{ form.lng }}
+    <p><button type="submit">Search</button> <a href="{% url 'home' %}">Reset</a></p>
+  </form>
+
+  <h2>{{ events|length }} event{{ events|length|pluralize }} found</h2>
+
+  {% for event in events %}
+    {% include "events/_event_card.html" %}
+  {% empty %}
+    <p>No events match your search.</p>
+  {% endfor %}
+
+  <script>
+    // "Use my location": ask the browser for coordinates and put them in the
+    // hidden lat/lng fields, so they're sent with the next search.
+    // Browsers only allow geolocation on localhost or HTTPS.
+    const latInput = document.getElementById("id_lat");
+    const lngInput = document.getElementById("id_lng");
+    const status = document.getElementById("location-status");
+    const clearButton = document.getElementById("clear-location");
+
+    function showLocationSet() {
+      status.textContent = "Using your location";
+      clearButton.hidden = false;
+    }
+
+    // After a search the hidden fields come back filled in; say so.
+    if (latInput.value && lngInput.value) {
+      showLocationSet();
+    }
+
+    document.getElementById("use-location").addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        status.textContent = "Location isn't supported in this browser. Pick a building instead.";
+        return;
+      }
+      status.textContent = "Finding you...";
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          latInput.value = position.coords.latitude.toFixed(6);
+          lngInput.value = position.coords.longitude.toFixed(6);
+          showLocationSet();
+          document.getElementById("search-form").submit();
+        },
+        () => {
+          status.textContent = "Couldn't get your location. Pick a building instead.";
+        }
+      );
+    });
+
+    clearButton.addEventListener("click", () => {
+      latInput.value = "";
+      lngInput.value = "";
+      status.textContent = "";
+      clearButton.hidden = true;
+    });
+  </script>
+</body>
+</html>

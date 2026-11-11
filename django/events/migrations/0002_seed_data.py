@@ -22,10 +22,6 @@ CATEGORIES = [
     "Sports",
 ]
 
-# TODO: VERIFY EVERY COORDINATE ON GOOGLE MAPS BEFORE THE DEMO.
-# These are approximate and were AI-generated. Right-click the building
-# in Google Maps to copy its "lat, lng" and replace the numbers here.
-# (code, name, latitude, longitude)
 BUILDINGS = [
     ("ARMS", "Neil Armstrong Hall of Engineering", "40.431000", "-86.914900"),
     ("BRNG", "Beering Hall", "40.425500", "-86.916000"),
@@ -84,8 +80,6 @@ def seed(apps, schema_editor):
 
     today = date.today()
     for title, category, code, room, days, start_hour, hours, organizer, description in EVENTS:
-        # Build the start as a time-zone-aware datetime on campus (Eastern) time.
-        # A start_hour like 19.5 means 7:30 PM.
         day = today + timedelta(days=days)
         start = datetime.combine(day, time(0, 0), tzinfo=CAMPUS_TZ) + timedelta(hours=start_hour)
         Event.objects.create(
@@ -100,9 +94,7 @@ def seed(apps, schema_editor):
         )
 
 
-def unseed(apps, schema_editor):
-    # Lets "migrate events 0001" undo this migration.
-    # Events go first because PROTECT blocks deleting categories/buildings in use.
+def unseed(apps, schema_editor): 
     apps.get_model("events", "Event").objects.all().delete()
     apps.get_model("events", "Category").objects.filter(name__in=CATEGORIES).delete()
     codes = [b[0] for b in BUILDINGS]

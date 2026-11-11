@@ -34,7 +34,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 'ordering': ['code'],
-                'indexes': [models.Index(fields=['latitude', 'longitude'], name='building_lat_lng_idx')],
             },
         ),
         migrations.CreateModel(
@@ -53,7 +52,6 @@ class Migration(migrations.Migration):
             ],
             options={
                 'ordering': ['start_time'],
-                'indexes': [models.Index(fields=['start_time'], name='event_start_idx'), models.Index(fields=['category', 'start_time'], name='event_cat_start_idx')],
                 'constraints': [models.CheckConstraint(condition=models.Q(('end_time__gt', models.F('start_time'))), name='event_end_after_start')],
             },
         ),

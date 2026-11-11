@@ -1,0 +1,11 @@
+{# One event in the results list. Expects `event` in the context. #}
+<article class="event-card">
+  <h3>{{ event.title }} <small>· {{ event.category.name }}</small></h3>
+  <div class="meta">
+    {% if event.distance is not None %}{{ event.distance|floatformat:1 }} mi · {% endif %}
+    {{ event.building.code }}{% if event.room %} {{ event.room }}{% endif %}
+    · {{ event.start_time|date:"D M j, g:i A" }}–{{ event.end_time|time:"g:i A" }}
+    · by {{ event.organizer }}
+  </div>
+  {% if event.description %}<p>{{ event.description }}</p>{% endif %}
+</article>
