@@ -16,7 +16,15 @@
 <body>
   <header>
     <h1>Purdue POIs</h1>
+    <button type="button" id="open-create">+ Create Event</button>
   </header>
+
+  {# Success messages, e.g. "Event created." after the create view redirects here. #}
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+    </ul>
+  {% endif %}
 
   {# method="get": filters only read data, so they go in the URL. #}
   <form method="get" class="search-form" id="search-form">
@@ -50,6 +58,31 @@
   {% empty %}
     <p>No events match your search.</p>
   {% endfor %}
+
+  {# The pop-up. A <dialog> is hidden until showModal() is called below. #}
+  {# data-open is set when the server sends the form back with errors, so it reopens. #}
+  <dialog id="create-dialog" {% if open_create_dialog %}data-open{% endif %}>
+    <h2>Create Event</h2>
+    {# method="post": creating an event changes data. #}
+    <form method="post" action="{% url 'event_create' %}">
+      {% csrf_token %}
+      {% include "events/_event_form.html" with form=event_form %}
+      <p>
+        <button type="button" id="cancel-create">Cancel</button>
+        <button type="submit">Create</button>
+      </p>
+    </form>
+  </dialog>
+
+  <script>
+    // Create Event pop-up: open on click, close on Cancel.
+    const createDialog = document.getElementById("create-dialog");
+    document.getElementById("open-create").addEventListener("click", () => createDialog.showModal());
+    document.getElementById("cancel-create").addEventListener("click", () => createDialog.close());
+    if (createDialog.hasAttribute("data-open")) {
+      createDialog.showModal();
+    }
+  </script>
 
   <script>
     // "Use my location": ask the browser for coordinates and put them in the

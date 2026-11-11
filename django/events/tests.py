@@ -169,3 +169,94 @@ class HomeViewTests(TestCase):
         response = self.client.get(reverse("home"), {"q": "'; DROP TABLE events_event; --"})
         self.assertContains(response, "0 events found")
         self.assertEqual(Event.objects.count(), 20)
+
+
+class EventCreateTests(TestCase):
+    """Tests for the Create Event pop-up (POST /events/create/)."""
+
+    def setUp(self):
+        self.category = Category.objects.get(name="Academic")
+        self.building = Building.objects.get(code="WALC")
+        # A day well in the future, written the way a datetime-local input sends it.
+        self.day = (timezone.localdate() + timedelta(days=30)).isoformat()
+
+    def post_data(self, **changes):
+        """Valid form data; pass keyword arguments to override fields."""
+        data = {
+            "title": "Test Workshop",
+            "description": "Learn things.",
+            "category": self.category.pk,
+            "building": self.building.pk,
+            "room": "1055",
+            "start_time": f"{self.day}T18:00",
+            "end_time": f"{self.day}T19:30",
+            "organizer": "Test Club",
+        }
+        data.update(changes)
+        # EventForm uses prefix="event", so the browser sends "event-title", etc.
+        return {f"event-{name}": value for name, value in data.items()}
+
+    def test_valid_post_creates_event_and_redirects(self):
+        before = Event.objects.count()
+        response = self.client.post(reverse("event_create"), self.post_data())
+        self.assertRedirects(response, reverse("home"))
+        self.assertEqual(Event.objects.count(), before + 1)
+
+    def test_success_message_shown_after_redirect(self):
+        response = self.client.post(reverse("event_create"), self.post_data(), follow=True)
+        self.assertContains(response, "Event Created and Saved")
+
+    def test_times_are_saved_in_campus_time(self):
+        self.client.post(reverse("event_create"), self.post_data())
+        event = Event.objects.get(title="Test Workshop")
+        # localtime() converts the stored UTC value back to settings.TIME_ZONE.
+        self.assertEqual(timezone.localtime(event.start_time).hour, 18)
+        self.assertEqual(timezone.localtime(event.end_time).minute, 30)
+
+    def test_end_before_start_is_rejected(self):
+        before = Event.objects.count()
+        data = self.post_data(start_time=f"{self.day}T18:00", end_time=f"{self.day}T17:00")
+        response = self.client.post(reverse("event_create"), data)
+        self.assertEqual(response.status_code, 200)  # page re-rendered, not redirected
+        self.assertContains(response, "End time must be after start time.")
+        self.assertEqual(Event.objects.count(), before)
+
+    def test_errors_reopen_dialog_and_keep_input(self):
+        data = self.post_data(title="", organizer="Keep Me")
+        response = self.client.post(reverse("event_create"), data)
+        self.assertTrue(response.context["open_create_dialog"])
+        self.assertContains(response, '<dialog id="create-dialog" data-open>')
+        self.assertContains(response, 'value="Keep Me"')
+        self.assertIn("title", response.context["event_form"].errors)
+
+    def test_unknown_category_is_rejected(self):
+        before = Event.objects.count()
+        response = self.client.post(reverse("event_create"), self.post_data(category=99999))
+        self.assertIn("category", response.context["event_form"].errors)
+        self.assertEqual(Event.objects.count(), before)
+
+    def test_get_not_allowed(self):
+        response = self.client.get(reverse("event_create"))
+        self.assertEqual(response.status_code, 405)
+
+    def test_created_event_shows_up_in_search(self):
+        # The Stage 2 "before/after" demo: search, create, search again.
+        search = {"q": "Test Workshop"}
+        self.assertContains(self.client.get(reverse("home"), search), "0 events found")
+        self.client.post(reverse("event_create"), self.post_data())
+        self.assertContains(self.client.get(reverse("home"), search), "1 event found")
+
+
+class CreateDialogTests(TestCase):
+    def test_homepage_has_empty_create_form_closed(self):
+        response = self.client.get(reverse("home"))
+        self.assertFalse(response.context["open_create_dialog"])
+        self.assertFalse(response.context["event_form"].is_bound)
+        self.assertNotContains(response, '<dialog id="create-dialog" data-open>')
+
+    def test_dialog_dropdowns_come_from_database(self):
+        Building.objects.create(code="NEWB", name="Brand New Hall", latitude="40.4", longitude="-86.9")
+        response = self.client.get(reverse("home"))
+        buildings = response.context["event_form"].fields["building"].queryset
+        self.assertTrue(buildings.filter(code="NEWB").exists())
+        self.assertContains(response, "NEWB - Brand New Hall")

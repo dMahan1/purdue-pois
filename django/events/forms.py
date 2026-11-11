@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Building, Category
+from .models import Building, Category, Event
 
 RADIUS_CHOICES = [
     ("0.25", "0.25 mi"),
@@ -62,5 +62,17 @@ class EventSearchForm(forms.Form):
         if (cleaned.get("lat") is None) != (cleaned.get("lng") is None):
             raise forms.ValidationError("Location needs both latitude and longitude.")
         return cleaned
+
+class EventForm(forms.ModelForm):
+    """Model form for creating an event, prefix fields so sent data isn't """ 
+    prefix = "event"
+
+    class Meta:
+        model = Event
+        fields = ["title", "description", "category", "building", "room", "start_time", "end_time", "organizer"]
+        widgets = {
+            'start_time': forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
+            'end_time': forms.DateTimeInput(attrs= {"type": "datetime-local"}, format="%Y-%m-%dT%H:%M")
+        } 
 
 

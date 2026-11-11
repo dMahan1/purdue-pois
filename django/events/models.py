@@ -46,6 +46,7 @@ class Event(models.Model):
             models.CheckConstraint(
                 condition=Q(end_time__gt=F("start_time")),
                 name="event_end_after_start",
+                violation_error_message="End time must be after start time.",
             ),
         ]
 

@@ -1,0 +1,15 @@
+{# The fields of an event form. Shared by the create pop-up and (Phase 4) edit. #}
+{# Expects `form` to be an EventForm. The <form> tag and buttons live in the page that includes this. #}
+
+{# Errors that aren't about one field, e.g. "end time must be after start time". #}
+{% if form.non_field_errors %}
+  <div class="errors">{{ form.non_field_errors }}</div>
+{% endif %}
+
+{% for field in form %}
+  <p>
+    {{ field.label_tag }}<br>
+    {{ field }}
+    {% if field.errors %}<span class="errors">{{ field.errors|join:" " }}</span>{% endif %}
+  </p>
+{% endfor %}
