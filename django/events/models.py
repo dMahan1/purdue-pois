@@ -41,8 +41,7 @@ class Event(models.Model):
 
     class Meta:
         ordering = ["start_time"]
-        constraints = [
-            # Enforced by the database and form
+        constraints = [ 
             models.CheckConstraint(
                 condition=Q(end_time__gt=F("start_time")),
                 name="event_end_after_start",

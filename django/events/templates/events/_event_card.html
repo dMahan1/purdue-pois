@@ -8,4 +8,18 @@
     · by {{ event.organizer }}
   </div>
   {% if event.description %}<p>{{ event.description }}</p>{% endif %}
+
+  {# request.GET.urlencode is the current search (e.g. "q=jazz&radius=0.5"). #}
+  {# Passing it along lets the edit/delete views send you back to the same results. #}
+  <div class="actions"> 
+    <a href="{% url 'event_edit' event.pk %}?{{ request.GET.urlencode }}">Edit</a>
+
+    {# Delete changes data, so it's a POST form with a CSRF token, never a link. #}
+    {# data-title is read by the confirm script in home.html. #}
+    <form method="post" action="{% url 'event_delete' event.pk %}?{{ request.GET.urlencode }}"
+          class="delete-form" data-title="{{ event.title }}">
+      {% csrf_token %}
+      <button type="submit">Delete</button>
+    </form>
+  </div>
 </article>

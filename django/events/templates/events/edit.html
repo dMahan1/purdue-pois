@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edit {{ event.title }} · Purdue POIs</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 1rem; }
+    .errors { color: #b00020; }
+  </style>
+</head>
+<body>
+  <h1>Edit Event</h1>
+
+  {# action="" posts back to this same URL, query string included, #}
+  {# so the view still knows which search to return to after saving. #}
+  <form method="post" action="">
+    {% csrf_token %}
+    {% include "events/_event_form.html" with form=form %}
+    <p>
+      <a href="{% url 'home' %}?{{request.GET.urlencode }}">Cancel</a>
+      <button type="submit">Save changes</button>
+    </p>
+  </form>
+</body>
+</html>

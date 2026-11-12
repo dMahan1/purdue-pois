@@ -1,9 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib import messages
 from django.db import transaction
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 
 from .forms import EventSearchForm, EventForm
+from .models import Event
 from .services import search_events
 
 def render_home(request, event_form, open_create_dialog=False):
@@ -34,6 +36,36 @@ def event_create(request):
         return redirect("home")
     # else return with errors
     return render_home(request, form, open_create_dialog=True)
+
+def redirect_home(request):
+    url = reverse("home")
+    if request.GET:
+        url += "?" + request.GET.urlencode()
+    return redirect(url)
+
+@require_http_methods(["GET", "POST"])
+def event_edit(request, pk):
+    event = get_object_or_404(Event, pk=pk)
+
+    if request.method == "POST":
+        form = EventForm(request.POST, instance=event)
+        if form.is_valid():
+            with transaction.atomic():
+                form.save()
+            messages.success(request, "Event Updated")
+            return redirect_home(request)
+    else:
+        form = EventForm(instance=event)
+    return render(request, "events/edit.html", {"form": form, "event": event})
+
+@require_POST
+def event_delete(request, pk):
+    event = get_object_or_404(Event, pk=pk)
+    with transaction.atomic():
+        event.delete()
+    messages.success(request, "Event Deleted")
+    return redirect_home(request)
+
 
 
 

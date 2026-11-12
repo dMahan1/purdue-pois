@@ -11,6 +11,8 @@
     .event-card { border: 1px solid #ccc; border-radius: 6px; padding: 0.75rem; margin: 0.75rem 0; }
     .event-card h3 { margin: 0 0 0.25rem; }
     .meta { color: #555; }
+    .actions { margin-top: 0.5rem; }
+    .actions form { display: inline; }
   </style>
 </head>
 <body>
@@ -82,6 +84,16 @@
     if (createDialog.hasAttribute("data-open")) {
       createDialog.showModal();
     }
+
+    // Delete buttons: ask first. If the user clicks Cancel, preventDefault()
+    // stops the form from being submitted, so nothing is deleted.
+    document.querySelectorAll(".delete-form").forEach((form) => {
+      form.addEventListener("submit", (event) => {
+        if (!confirm(`Delete "${form.dataset.title}"? This can't be undone.`)) {
+          event.preventDefault();
+        }
+      });
+    });
   </script>
 
   <script>
