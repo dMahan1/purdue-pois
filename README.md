@@ -1,9 +1,14 @@
 # Purdue POIs
 Page to find nearby points of interest around campus
 
-Currently no functionality aside from **Hello World** page
-
 Uses the Python-Django stack
+
+**Running the Program**
+
+cd django
+python3 -m pip install django
+python3 manage.py migrate
+python3 manage.py runserver
 
 **AI Usage**
 
